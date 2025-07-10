@@ -1,21 +1,19 @@
 name: Create OCI platform with Terraform
+
 on:
   workflow_dispatch:
 
 jobs:
   OCI-Deployment:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: Terraform
+
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v2
 
       - name: 'OCI login configuration'
         run: |
-          mkdir ~/.oci
+          mkdir -p ~/.oci
           echo "[DEFAULT]" > ~/.oci/config
           echo "user=${{secrets.OCI_USER}}" >> ~/.oci/config
           echo "fingerprint=${{secrets.OCI_FINGERPRINT}}" >> ~/.oci/config
@@ -23,13 +21,15 @@ jobs:
           echo "region=${{secrets.OCI_REGION}}" >> ~/.oci/config
           echo "key_file=${{secrets.OCI_KEY_FILE}}" >> ~/.oci/config
 
+          echo "${{secrets.OCI_KEY_FILE_CONTENT}}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+
       - name: 'Install OCI CLI'
         run: |
           curl -L -O https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
           chmod +x install.sh
           ./install.sh --accept-all-defaults
           echo "/home/runner/bin" >> $GITHUB_PATH
-          exec -l $SHELL
 
       - name: 'Fix OCI Config File Permissions'
         run: |
@@ -39,7 +39,6 @@ jobs:
       - name: 'Verify OCI CLI connection'
         run: |
           oci os ns get
-
 
       - name: Output results
         run: echo "completed successfully!"
